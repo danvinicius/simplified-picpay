@@ -29,7 +29,7 @@ public class NotificationService {
 
         if (response.getStatusCode() != HttpStatus.OK) {
             System.out.println("Error on sending notification");
-            throw new NotificationException("Notification service is down");
+            throw new NotificationException();
         }
     }
 }

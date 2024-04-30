@@ -15,7 +15,7 @@ import com.danvinicius.simplifiedpicpay.domain.transaction.Transaction;
 import com.danvinicius.simplifiedpicpay.domain.user.User;
 import com.danvinicius.simplifiedpicpay.domain.user.UserType;
 import com.danvinicius.simplifiedpicpay.dto.TransactionDTO;
-import com.danvinicius.simplifiedpicpay.exceptions.UnauthorizedTransaction;
+import com.danvinicius.simplifiedpicpay.exceptions.UnauthorizedTransactionException;
 import com.danvinicius.simplifiedpicpay.exceptions.UserNotFoundException;
 import com.danvinicius.simplifiedpicpay.repositories.TransactionRepository;
 
@@ -43,7 +43,7 @@ public class TransactionService {
         this.validateTransaction(sender, transactionRequest.amount());
 
         if (!this.authorizeTransaction(sender, transactionRequest.amount())) {
-            throw new UnauthorizedTransaction();
+            throw new UnauthorizedTransactionException();
         }
 
         Transaction transaction = new Transaction();
@@ -77,12 +77,12 @@ public class TransactionService {
     }
 
 
-    public void validateTransaction(User sender, BigDecimal amount) throws UnauthorizedTransaction {
+    public void validateTransaction(User sender, BigDecimal amount) throws UnauthorizedTransactionException {
         if (sender.getType() == UserType.MERCHANT) {
-            throw new UnauthorizedTransaction("Merchant user cannot make transactions");
+            throw new UnauthorizedTransactionException("Merchant user cannot make transactions");
         }
         if (sender.getBalance().compareTo(amount) < 0) {
-            throw new UnauthorizedTransaction("Insufficient balance");
+            throw new UnauthorizedTransactionException("Insufficient balance");
         }
     }
 }
