@@ -29,7 +29,7 @@ public class UserService {
         return this.userRepository.save(user);
     }
 
-    public void save(User user) {
+    public void saveUser(User user) {
         this.userRepository.save(user);
     }
 }
