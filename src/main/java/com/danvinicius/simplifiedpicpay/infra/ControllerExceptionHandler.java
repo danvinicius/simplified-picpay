@@ -22,7 +22,7 @@ public class ControllerExceptionHandler {
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ExceptionDTO> duplicateEntryHandler(UserNotFoundException e) {
+    public ResponseEntity<ExceptionDTO> userNotFoundHandler(UserNotFoundException e) {
         Integer status = HttpStatus.NOT_FOUND.value();
         ExceptionDTO exception = new ExceptionDTO("User not found", status) ;
         return ResponseEntity.status(status).body(exception);
@@ -43,7 +43,7 @@ public class ControllerExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ExceptionDTO> RuntimeExceptionHandler(NotificationException e) {
+    public ResponseEntity<ExceptionDTO> runtimeExceptionHandler(RuntimeException e) {
         Integer status = HttpStatus.INTERNAL_SERVER_ERROR.value();
         ExceptionDTO exception = new ExceptionDTO("Something went wrong", status) ;
         return ResponseEntity.status(status).body(exception);
