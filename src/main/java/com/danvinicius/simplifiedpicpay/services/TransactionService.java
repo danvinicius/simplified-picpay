@@ -30,10 +30,13 @@ public class TransactionService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Value("${picpay.authorizerService.url}")
     private String authorizerServiceUrl;
 
-    public void createTransaction(TransactionDTO transactionRequest) throws UserNotFoundException {
+    public Transaction createTransaction(TransactionDTO transactionRequest) throws UserNotFoundException {
         User sender = userService.findUserById(transactionRequest.senderId());
         User receiver = userService.findUserById(transactionRequest.receiverId());
 
@@ -55,6 +58,14 @@ public class TransactionService {
         this.transactionRepository.save(transaction);
         this.userService.save(sender);
         this.userService.save(receiver);
+
+        String receiverNotificationMessage = "Transaction worth " + "$" + transaction.getAmount().divide(BigDecimal.valueOf(100)) + " received from " + sender.getFirstName() + ".";
+        System.out.println(receiverNotificationMessage);
+        
+        this.notificationService.sendNotification(sender, "Transaction sent sucessfully.");
+        this.notificationService.sendNotification(receiver, receiverNotificationMessage);
+
+        return transaction;
     }
 
     public boolean authorizeTransaction(User sender, BigDecimal amount) {
