@@ -2,15 +2,8 @@ package com.danvinicius.simplifiedpicpay.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import com.danvinicius.simplifiedpicpay.domain.transaction.Transaction;
 import com.danvinicius.simplifiedpicpay.domain.user.User;
 import com.danvinicius.simplifiedpicpay.domain.user.UserType;
@@ -29,13 +22,10 @@ public class TransactionService {
     private UserService userService;
 
     @Autowired
-    private RestTemplate restTemplate;
+    private AuthorizationService authorizationService;
 
     @Autowired
     private NotificationService notificationService;
-
-    @Value("${picpay.authorizerService.url}")
-    private String authorizerServiceUrl;
 
     public Transaction createTransaction(TransactionDTO transactionRequest) throws UserNotFoundException {
         User sender = userService.findUserById(transactionRequest.senderId());
@@ -53,8 +43,8 @@ public class TransactionService {
         receiver.setBalance(receiver.getBalance().add(transactionRequest.amount()));
 
         this.transactionRepository.save(transaction);
-        this.userService.save(sender);
-        this.userService.save(receiver);
+        this.userService.saveUser(sender);
+        this.userService.saveUser(receiver);
 
         this.handleTransactionNotification(transaction, sender, receiver);
 
@@ -64,7 +54,7 @@ public class TransactionService {
     public void validateAndAuthorizeTransaction(User sender, TransactionDTO transaction) throws UnauthorizedTransactionException {
         this.validateTransaction(sender, transaction.amount());
 
-        if (!this.authorizeTransaction(sender, transaction.amount())) {
+        if (!this.authorizationService.authorizeTransaction(sender, transaction.amount())) {
             throw new UnauthorizedTransactionException();
         }
     }
@@ -75,13 +65,6 @@ public class TransactionService {
         
         this.notificationService.sendNotification(sender, "Transaction sent sucessfully.");
         this.notificationService.sendNotification(receiver, receiverNotificationMessage);
-    }
-
-    public boolean authorizeTransaction(User sender, BigDecimal amount) {
-        // mocked authorizer service
-        ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity(this.authorizerServiceUrl, Map.class);
-        String message = (String) authorizationResponse.getBody().get("message");
-        return authorizationResponse.getStatusCode() == HttpStatus.OK && message.equalsIgnoreCase("Autorizado");
     }
 
 
