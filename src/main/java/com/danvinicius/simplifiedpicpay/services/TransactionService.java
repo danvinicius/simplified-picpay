@@ -15,6 +15,7 @@ import com.danvinicius.simplifiedpicpay.domain.transaction.Transaction;
 import com.danvinicius.simplifiedpicpay.domain.user.User;
 import com.danvinicius.simplifiedpicpay.domain.user.UserType;
 import com.danvinicius.simplifiedpicpay.dto.TransactionDTO;
+import com.danvinicius.simplifiedpicpay.exceptions.NotificationException;
 import com.danvinicius.simplifiedpicpay.exceptions.UnauthorizedTransactionException;
 import com.danvinicius.simplifiedpicpay.exceptions.UserNotFoundException;
 import com.danvinicius.simplifiedpicpay.repositories.TransactionRepository;
@@ -40,11 +41,7 @@ public class TransactionService {
         User sender = userService.findUserById(transactionRequest.senderId());
         User receiver = userService.findUserById(transactionRequest.receiverId());
 
-        this.validateTransaction(sender, transactionRequest.amount());
-
-        if (!this.authorizeTransaction(sender, transactionRequest.amount())) {
-            throw new UnauthorizedTransactionException();
-        }
+        this.validateAndAuthorizeTransaction(sender, transactionRequest);
 
         Transaction transaction = new Transaction();
         transaction.setAmount(transactionRequest.amount());
@@ -64,7 +61,15 @@ public class TransactionService {
         return transaction;
     }
 
-    public void handleTransactionNotification(Transaction transaction, User sender, User receiver) {
+    public void validateAndAuthorizeTransaction(User sender, TransactionDTO transaction) throws UnauthorizedTransactionException {
+        this.validateTransaction(sender, transaction.amount());
+
+        if (!this.authorizeTransaction(sender, transaction.amount())) {
+            throw new UnauthorizedTransactionException();
+        }
+    }
+
+    public void handleTransactionNotification(Transaction transaction, User sender, User receiver) throws NotificationException {
         String receiverNotificationMessage = "Transaction worth " + "$" + transaction.getAmount().divide(BigDecimal.valueOf(100)) + " received from " + sender.getFirstName() + ".";
         System.out.println(receiverNotificationMessage);
         
@@ -73,7 +78,6 @@ public class TransactionService {
     }
 
     public boolean authorizeTransaction(User sender, BigDecimal amount) {
-
         // mocked authorizer service
         ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity(this.authorizerServiceUrl, Map.class);
         String message = (String) authorizationResponse.getBody().get("message");
