@@ -59,13 +59,17 @@ public class TransactionService {
         this.userService.save(sender);
         this.userService.save(receiver);
 
+        this.handleTransactionNotification(transaction, sender, receiver);
+
+        return transaction;
+    }
+
+    public void handleTransactionNotification(Transaction transaction, User sender, User receiver) {
         String receiverNotificationMessage = "Transaction worth " + "$" + transaction.getAmount().divide(BigDecimal.valueOf(100)) + " received from " + sender.getFirstName() + ".";
         System.out.println(receiverNotificationMessage);
         
         this.notificationService.sendNotification(sender, "Transaction sent sucessfully.");
         this.notificationService.sendNotification(receiver, receiverNotificationMessage);
-
-        return transaction;
     }
 
     public boolean authorizeTransaction(User sender, BigDecimal amount) {
